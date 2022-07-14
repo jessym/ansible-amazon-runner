@@ -1,0 +1,17 @@
+---
+- name: Find security group (for deletion)
+  amazon.aws.ec2_group_info:
+    filters:
+      group-name: "{{ Config.INSTANCE_SGROUP_NAME }}"
+  register: __var__
+
+- name: Extract security group ID
+  when: __var__.security_groups is defined and (__var__.security_groups | length > 0)
+  set_fact:
+    GROUP_ID: "{{ __var__.security_groups[0].group_id }}"
+
+- name: Delete security group
+  when: GROUP_ID is defined
+  amazon.aws.ec2_group:
+    group_id: "{{ GROUP_ID }}"
+    state: absent

@@ -1,0 +1,14 @@
+---
+- name: Install unix tools
+  become: yes
+  apt:
+    name:
+      - zip
+      - unzip
+      - curl
+    update_cache: yes
+    state: latest
+  register: __var__
+  until: __var__ is not failed
+  retries: 5
+  delay: 5

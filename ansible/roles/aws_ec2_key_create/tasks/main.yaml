@@ -1,0 +1,9 @@
+---
+- name: Create new keypair
+  amazon.aws.ec2_key:
+    name: "{{ Config.INSTANCE_KEY_NAME }}"
+    key_type: ed25519
+  register: __var__
+
+- set_fact:
+    PRIVATE_KEY: "{{ __var__.key.private_key }}"

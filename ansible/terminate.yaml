@@ -1,0 +1,12 @@
+---
+- name: 'Terminate the EC2 instance from AWS'
+  hosts: localhost
+  connection: local
+  roles:
+    # Config
+    - all_global_config
+    - aws_settings_prepare
+    # Cleanup
+    - aws_ec2_instance_terminate
+    - aws_ec2_sgroup_delete
+    - aws_ec2_key_delete

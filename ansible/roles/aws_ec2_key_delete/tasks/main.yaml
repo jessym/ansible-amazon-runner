@@ -1,0 +1,5 @@
+---
+- name: Delete keypair
+  amazon.aws.ec2_key:
+    name: "{{ Config.INSTANCE_KEY_NAME }}"
+    state: absent

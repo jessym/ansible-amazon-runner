@@ -1,0 +1,31 @@
+---
+- name: Create a new instance
+  amazon.aws.ec2_instance:
+    name: "{{ Config.INSTANCE_NAME }}"
+    instance_type: "{{ Config.INSTANCE_TYPE }}"
+    image_id: "{{ Config.IMAGE_ID }}"
+    key_name: "{{ Config.INSTANCE_KEY_NAME }}"
+    state: running
+    wait: yes
+    security_groups: "{{ Config.INSTANCE_SGROUP_NAME }}"
+    network:
+      assign_public_ip: yes
+    volumes:
+      - device_name: /dev/sda1
+        ebs:
+          volume_size: "{{ Config.INSTANCE_SIZE_GB }}"
+          delete_on_termination: yes
+  register: __var__
+
+- name: Set the AWS_INSTANCE variable
+  when: __var__.instances is defined and (__var__.instances | length > 0)
+  set_fact:
+    AWS_INSTANCE:
+      id: "{{ __var__.instances[0].instance_id }}"
+      state: "{{ __var__.instances[0].state.name }}"
+      ip_address: "{{ __var__.instances[0].public_ip_address }}"
+
+- name: Print the created instance
+  when: __var__.instances is defined and (__var__.instances | length > 0)
+  debug:
+    var: AWS_INSTANCE

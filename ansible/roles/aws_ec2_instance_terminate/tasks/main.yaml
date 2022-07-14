@@ -1,0 +1,15 @@
+---
+- name: Terminate instance
+  amazon.aws.ec2_instance:
+    state: terminated
+    wait: yes
+    filters:
+      "tag:Name": "{{ Config.INSTANCE_NAME }}"
+  register: __var__
+
+- name: Rename terminated instance with timestamp
+  when: __var__.instances is defined and (__var__.instances | length > 0)
+  amazon.aws.ec2_tag:
+    resource: "{{ __var__.instances[0].instance_id }}"
+    tags:
+      Name: "{{ Config.INSTANCE_NAME }}-terminated-{{ ansible_date_time.epoch }}"

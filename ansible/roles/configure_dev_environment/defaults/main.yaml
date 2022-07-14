@@ -1,0 +1,6 @@
+Dev:
+  PREFERRED_JAVA_VERSIONS:
+    - 8
+    - 11
+  PREFERRED_NODE_VERSIONS:
+    - 16

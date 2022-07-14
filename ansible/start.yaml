@@ -1,0 +1,25 @@
+---
+- name: 'Create an EC2 instance on AWS'
+  hosts: localhost
+  roles:
+    # Config
+    - all_global_config
+    - aws_settings_prepare
+    # Cleanup
+    - aws_ec2_instance_terminate
+    - aws_ec2_sgroup_delete
+    - aws_ec2_key_delete
+    # Setup
+    - aws_ec2_key_create
+    - aws_ec2_sgroup_create
+    - aws_ec2_instance_create
+    # Registering new instance
+    - ansible_register_host
+
+- name: 'Set up a dev environment on the EC2 instance'
+  hosts: aws
+  roles:
+    # Config
+    - all_global_config
+    # Environment
+    - configure_dev_environment

@@ -1,0 +1,10 @@
+---
+- name: Create new security group
+  amazon.aws.ec2_group:
+    name: "{{ Config.INSTANCE_SGROUP_NAME }}"
+    description: SSH anywhere
+    rules:
+      - proto: tcp
+        to_port: 22
+        from_port: 22
+        cidr_ip: 0.0.0.0/0

@@ -1,0 +1,28 @@
+---
+- name: Save the IP address to a file
+  when: AWS_INSTANCE.ip_address is defined
+  local_action:
+    module: copy
+    content: "{{ AWS_INSTANCE.ip_address }}"
+    dest: /ssh/ip_address.txt
+
+- name: Save the SSH username to a file
+  when: Config.IMAGE_USERNAME is defined
+  local_action:
+    module: copy
+    content: "{{ Config.IMAGE_USERNAME }}"
+    dest: /ssh/username.txt
+
+- name: Save the SSH private key to a file
+  local_action:
+    module: copy
+    content: "{{ PRIVATE_KEY }}"
+    mode: '600'
+    dest: /ssh/private_key.pem
+
+- name: Register the new instance as a host
+  add_host:
+    groups: aws
+    name: "{{ AWS_INSTANCE.ip_address }}"
+    ansible_user: "{{ Config.IMAGE_USERNAME }}"
+    ansible_ssh_private_key_file: /ssh/private_key.pem

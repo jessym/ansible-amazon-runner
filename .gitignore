@@ -1,0 +1,8 @@
+*accessKeys.csv
+
+ansible/ignore.yaml
+
+ssh/details.txt
+ssh/*.pem
+ssh/username.txt
+ssh/ip_address.txt
