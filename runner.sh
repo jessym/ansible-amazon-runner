@@ -17,8 +17,8 @@ function is_one_of {
 }
 function print_usage {
   echo "Usage:"
-  echo "   $0 start"
-  echo "   $0 connect <ports>"
+  echo "   $0 start [ports?]"
+  echo "   $0 connect [ports?]"
   echo "   $0 terminate"
   echo "   $0 debug"
   echo "Supported env:"
