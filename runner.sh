@@ -15,13 +15,22 @@ function is_one_of {
     echo "false"
     return 1
 }
+function print_usage {
+  echo "Usage:"
+  echo "   $0 start"
+  echo "   $0 connect <ports>"
+  echo "   $0 terminate"
+  echo "   $0 debug"
+  echo "Supported env:"
+  echo "   AWS_CSV_KEYS_FILE"
+}
 
 ###
 ### Determine which ansible command to run
 ###
 command="$1"
 if [ "$command" != "start" ] && [ "$command" != "connect" ] && [ "$command" != "terminate" ] && [ "$command" != "debug" ]; then
-  echo "Usage: $0 [start|connect|terminate|debug]"
+  print_usage
   exit 1
 fi
 requires_aws_connection=$(is_one_of "$command" "start" "terminate")
@@ -33,10 +42,10 @@ requires_local_container=$(is_one_of "$command" "start" "terminate" "debug")
 if [ "$requires_aws_connection" == "true" ]; then
   aws_keys_csv_file=$(find . -iname '*accessKeys.csv' -type f -maxdepth 1 | head -n 1)
   if [ ! -f "$aws_keys_csv_file" ]; then
-    aws_keys_csv_file="$2"
+    aws_keys_csv_file="$AWS_CSV_KEYS_FILE"
     if [ ! -f "$aws_keys_csv_file" ]; then
       echo "Could not find an AWS csv file at the root of the project, please provide one via the CLI"
-      echo "Usage: $0 [start|terminate|debug] [aws_keys_csv_file]"
+      print_usage
       exit 1
     fi
   fi
@@ -69,7 +78,8 @@ fi
 ### Start an SSH session with the AWS instance
 ###
 if [ "$command" == "start" ] || [ "$command" == "connect" ]; then
-  ./ssh/connect.sh
+  tunnel_ports="$2"
+  ./ssh/connect.sh "$tunnel_ports"
 
   echo "###"
   echo "###"
