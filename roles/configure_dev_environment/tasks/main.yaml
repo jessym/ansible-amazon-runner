@@ -1,5 +1,4 @@
 ---
 - include_tasks: install_unix_tools.yaml
 - include_tasks: install_docker.yaml
-- include_tasks: install_sdkman.yaml
-- include_tasks: install_nvm.yaml
+- include_tasks: install_sdks_and_runtimes.yaml

@@ -1,101 +1,113 @@
 #!/usr/bin/env bash
 
 ###
-### Helper functions
+### Setup python
 ###
-function is_one_of {
-    local value="$1"
-    shift
-    for i in "$@"; do
-        if [[ "$value" == "$i" ]]; then
-            echo "true"
-            return 0
-        fi
-    done
-    echo "false"
-    return 1
-}
-function print_usage {
-  echo "Usage:"
-  echo "   $0 start [ports?]"
-  echo "   $0 connect [ports?]"
-  echo "   $0 terminate"
-  echo "   $0 debug"
-  echo "Supported env:"
-  echo "   AWS_CSV_KEYS_FILE"
-}
-
-###
-### Determine which ansible command to run
-###
-command="$1"
-if [ "$command" != "start" ] && [ "$command" != "connect" ] && [ "$command" != "terminate" ] && [ "$command" != "debug" ]; then
-  print_usage
+if ! command -v python > /dev/null; then
+  echo "Please install Python"
   exit 1
 fi
-requires_aws_connection=$(is_one_of "$command" "start" "terminate")
-requires_local_container=$(is_one_of "$command" "start" "terminate" "debug")
+if [[ ! -d ".venv" ]]; then
+  python -m venv .venv
+fi
+source .venv/bin/activate
+pip install -r requirements.txt -q -q
 
 ###
-### Read the AWS csv file
+### Available playbooks
 ###
-if [ "$requires_aws_connection" == "true" ]; then
-  aws_keys_csv_file=$(find . -iname '*accessKeys.csv' -type f -maxdepth 1 | head -n 1)
-  if [ ! -f "$aws_keys_csv_file" ]; then
-    aws_keys_csv_file="$AWS_CSV_KEYS_FILE"
-    if [ ! -f "$aws_keys_csv_file" ]; then
-      echo "Could not find an AWS csv file at the root of the project, please provide one via the CLI"
-      print_usage
-      exit 1
+available_playbooks=()
+while IFS= read -r playbook; do
+  available_playbooks+=("${playbook#playbook_}")
+done < <(find . -iname 'playbook_*.yaml' -type f -maxdepth 1 -exec basename {} .yaml \;)
+
+###
+### Helper functions
+###
+function stdout {
+  echo -e "$1"
+}
+function stdbld {
+  echo -e "\033[1m$1\033[0m"
+}
+function is_playbook {
+  needle="$1"
+  for item in "${available_playbooks[@]}"; do
+    if [ "$item" == "$needle" ]; then
+        echo "true"
+        return
     fi
-  fi
-fi
+  done
+  echo "false"
+}
+function run_playbook {
+  command="$1"
+  source ./awsconfig
+  ansible-playbook "playbook_$command.yaml"
+}
+function usage {
+  stdbld "Usage:"
+  for playbook in "${available_playbooks[@]}"; do
+      stdout "   $0 $playbook"
+  done
+  stdout "   $0 connect [port?]"
+  exit 1
+}
 
-if [ "$requires_local_container" == "true" ]; then
-  ###
-  ### Build the ansible runner image
-  ###
-  docker build ./docker --platform linux/x86_64 -t ansible-amazon-runner
-  docker image prune -f
+###
+### Command argument
+###
+command="$1"
 
-  ###
-  ### Start the local container
-  ###
-  ansible_command="ansible-playbook $command.yaml"
-  if [ "$command" == "debug" ]; then
-    ansible_command="bash"
+###
+### Run playbook
+###
+if [[ "$(is_playbook "$command")" == "true" ]]; then
+  run_playbook "$command"
+  if [[ "$command" == "provision" ]]; then
+    stdbld "The server has been provisioned - would you like to connect?"
+    stdout "(Optionally enter a port number followed by Enter, or kill this script with Ctrl-C)"
+    read -r port
+    ./runner.sh connect "$port"
   fi
-  docker run \
-    --rm -it \
-    --volume "$(pwd)/ansible:/ansible" \
-    --volume "$(pwd)/ssh:/ssh" \
-    --mount "type=bind,source=$(pwd)/$aws_keys_csv_file,target=/root/.aws/keys.csv" \
-    --platform linux/x86_64 \
-    ansible-amazon-runner "$ansible_command"
+  exit 0
 fi
 
 ###
-### Start an SSH session with the AWS instance
+### Connect via SSH
 ###
-if [ "$command" == "start" ] || [ "$command" == "connect" ]; then
-  tunnel_ports="$2"
-  ./ssh/connect.sh "$tunnel_ports"
+if [[ "$command" == "connect" ]]; then
+  port="$2"
+  username=$(cat .config/username.txt)
+  ip_address=$(cat .config/ip_address.txt)
+  private_key=".config/private_key.pem"
 
-  echo "###"
-  echo "###"
-  echo "### Detected end of SSH session. Press ENTER to terminate the Amazon instance"
-  echo "###"
-  echo "### Or, press Ctrl+C to keep the instance running, and exit it manually via the \"$0 terminate\" command"
-  echo "### (💰 keep in mind, though, that it costs money to keep running 💰)"
-  echo "###"
-  echo "###"
+  ssh_tunnel_arg=""
+  if [[ -n "$port" ]]; then
+    ssh_tunnel_arg=" -L ${port}:localhost:${port}"
+  fi
+
+  ssh \
+    -i $private_key \
+    -o "StrictHostKeyChecking=no" \
+    -o "UserKnownHostsFile=/dev/null" \
+    $ssh_tunnel_arg \
+    $username@$ip_address 
+
+  stdout "###"
+  stdout "###"
+  stdout "### $(stdbld "Detected the end of SSH session; press ENTER to terminate the Amazon instance")"
+  stdout "###"
+  stdout "### Or, press Ctrl+C to keep the instance running, and exit it manually via the \"$0 terminate\" command"
+  stdout "### (💰 keep in mind, though, that it costs money to keep running 💰)"
+  stdout "###"
+  stdout "###"
   read -r
   ./runner.sh terminate
+  exit 0
 fi
 
 ###
-### terminate the ansible runner image (if requested)
+### Unknown command
 ###
-if [ "$command" == "terminate" ]; then
-  echo "AWS instance terminated (consider manually wiping the local docker image)"
-fi
+usage

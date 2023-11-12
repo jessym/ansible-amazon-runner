@@ -1,0 +1,6 @@
+Dev:
+  JAVA_MAJOR_VERSIONS:
+    - 11
+    - 17
+  NODE_MAJOR_VERSIONS:
+    - 18

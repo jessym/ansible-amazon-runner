@@ -1,13 +1,11 @@
 ---
 - name: Set global facts
-  set_fact: 
+  set_fact:
     Config:
       INSTANCE_NAME: ansible-amazon-runner
-      INSTANCE_REGION: eu-central-1
       INSTANCE_KEY_NAME: ansible-amazon-runner-key
       INSTANCE_SGROUP_NAME: ansible-amazon-runner-sgroup
       INSTANCE_TYPE: t2.small
       INSTANCE_SIZE_GB: 8
       IMAGE_ID: ami-065deacbcaac64cf2
       IMAGE_USERNAME: ubuntu
-        

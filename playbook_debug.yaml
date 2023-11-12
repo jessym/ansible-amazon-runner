@@ -1,0 +1,21 @@
+---
+- name: Debug Playbook
+  hosts: localhost
+  tasks:
+    - debug:
+        msg: Running debug playbook
+
+- name: Ensure a local .config folder
+  hosts: localhost
+  tasks:
+    - file:
+        path: .config
+        state: directory
+
+- name: Get AWS caller identity
+  hosts: localhost
+  tasks:
+    - amazon.aws.aws_caller_info:
+      register: __var__
+    - debug:
+        msg: '{{ __var__ }}'

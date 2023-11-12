@@ -1,0 +1,29 @@
+---
+- name: Install ASDF
+  shell: |
+    eval "$(curl -s https://gist.githubusercontent.com/jessym/fb9f1cf373ebf4379af044cd3a3649fc/raw/0fe2d5b83a4c81dcebe7d49dc8a2dfa15b546cb8/idempoty.sh)"
+    idempoty asdf --plugins=java,nodejs,maven,gradle
+  args:
+    executable: /bin/bash
+
+- name: Install Java
+  shell: |
+    candidate=$(asdf list all java | grep '^zulu-{{item}}' | tail -n 1)
+    asdf install java ${candidate}
+    asdf global java ${candidate}
+  args:
+    executable: /bin/bash
+  register: __var__
+  changed_when: "'already installed' not in __var__.stdout"
+  with_items: '{{ Dev.JAVA_MAJOR_VERSIONS }}'
+
+- name: Install Node
+  shell: |
+    candidate=$(asdf list all nodejs | grep '^{{item}}' | tail -n 1)
+    asdf install nodejs ${candidate}
+    asdf global nodejs ${candidate}
+  args:
+    executable: /bin/bash
+  register: __var__
+  changed_when: "'already installed' not in __var__.stdout"
+  with_items: '{{ Dev.NODE_MAJOR_VERSIONS }}'
