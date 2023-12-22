@@ -1,4 +1,4 @@
-# Ansible Amazon Runner
+# Ansible Devbox
 
 This project makes it easy to spin up a temporary Linux development machine on Amazon.
 
