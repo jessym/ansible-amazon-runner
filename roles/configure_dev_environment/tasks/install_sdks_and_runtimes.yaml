@@ -17,6 +17,11 @@
   changed_when: "'already installed' not in __var__.stdout"
   with_items: '{{ Dev.JAVA_MAJOR_VERSIONS }}'
 
+- name: Install Java (set JAVA_HOME)
+  shell: echo ". ~/.asdf/plugins/java/set-java-home.bash" >> ~/.bashrc
+  args:
+    executable: /bin/bash
+
 - name: Install Node
   shell: |
     candidate=$(asdf list all nodejs | grep '^{{item}}' | tail -n 1)
